@@ -17,7 +17,7 @@ function App() {
     }
     return 0;
   };
-  
+
   const [filterString, setFilterString] = useState("");
   return (
     <Flex
@@ -26,21 +26,21 @@ function App() {
       h="100vh"
       bgGradient="linear(to-b, #91039c ,#8889d1,#292933  20%)"
       align="center"
-      p="4rem"
+      pt="1rem"
+      pl="1rem"
+      pr="1rem"
     >
-      <Box>
-        <Heading as="h1" color="white">
-          Hallo Covid!
+      <Box w="100vw" align="center">
+        <Heading as="h2" color="gray.200" pt="10px">
+          Corona Fallzahlen:
         </Heading>
-        <Text color="white" pt="10px">
-          Aktuelle Corona Fallzahlen
-        </Text>
+        <Text color="gray.300">auf 100k Einwohner</Text>
       </Box>
       <Box w="100%" pt="1rem">
         <Input
           color="grey.100"
           type="text"
-          placeholder="Ort suchen"
+          placeholder="Landkreis suchen"
           onChange={(event) => setFilterString(event.target.value)}
         ></Input>
       </Box>
@@ -54,24 +54,25 @@ function App() {
             )
             .map((item) => (
               <Box
-                background="white"
+                background={
+                  Math.round(item[1].weekIncidence) >= 200 ? "red.200" : "white"
+                }
                 m="3px"
                 p="20px"
                 borderRadius="5px"
-                color="gray.500"
+                color="gray.600"
                 fontWeight="semibold"
                 letterSpacing="wide"
-                fontSize="xs"
                 ml="2"
               >
-                <p>{item[1].name}</p>
-                <p>Fälle pro 100k: {Math.round(item[1].weekIncidence)}</p>
-                <p>{item[1].population}</p>
+                <Heading fontSize="xl">
+                  {item[1].name}: {Math.round(item[1].weekIncidence)}
+                </Heading>
               </Box>
             ))}
         </Box>
       ) : (
-        <Box  flex="1" justify="center">
+        <Box flex="1" justify="center">
           <Spinner color="white" />
         </Box>
       )}
