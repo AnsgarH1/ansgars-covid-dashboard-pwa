@@ -10,7 +10,6 @@ import {
 } from "@chakra-ui/react";
 import React, {
   FunctionComponent,
-  Reducer,
   useEffect,
   useReducer,
   useState,
@@ -41,11 +40,6 @@ interface ICardCompProps {
   item: ICovData;
   isFavorite: boolean;
   handleFavoriteClick: () => void;
-}
-
-interface IFavoriteReducerAction {
-  type: string;
-  payload: ICovData;
 }
 
 const CardComp = ({
@@ -102,45 +96,11 @@ const CardComp = ({
 };
 
 const App: FunctionComponent = () => {
-  const favoritesReducer = (
-    favorites: Array<ICovData>,
-    action: IFavoriteReducerAction
-  ) => {
-    switch (action.type) {
-      case "addFavorite":
-        return [...favorites, action.payload];
-      case "removeFavorite":
-        const newFavorites = [...favorites];
-        const indexOfObject = newFavorites.indexOf(action.payload);
-        newFavorites.splice(indexOfObject, 1);
-        console.log(newFavorites);
-        return newFavorites;
-      default:
-        throw new Error();
-    }
-  };
-
   const [data, setData] = useState<Array<ICovData>>([]);
-  const [favorites, dispatchFavorites] = useReducer(favoritesReducer, []);
+  const [favorites, setFavorites] = useState<Array<ICovData>>([]);
   const [filterString, setFilterString] = useState<string>("");
 
-  const isFavorite = (item: ICovData) => favorites.includes(item);
-  const testDataSet: ICovData = {
-    ags: "07131",
-    name: "Ahrweiler",
-    county: "LK Ahrweiler",
-    state: "Rheinland-Pfalz",
-    population: 130086,
-    cases: 2305,
-    deaths: 35,
-    casesPerWeek: 175,
-    deathsPerWeek: 1,
-    stateAbbreviation: "RP",
-    recovered: 1859,
-    weekIncidence: 134.52639023415279,
-    casesPer100k: 1771.9047399412696,
-    delta: { cases: 20, deaths: 0, recovered: 40 },
-  };
+  const isFavorite = (item: ICovData): boolean => favorites.includes(item);
 
   useEffect(() => {
     fetch("https://api.corona-zahlen.org/districts")
@@ -153,6 +113,22 @@ const App: FunctionComponent = () => {
       .catch((error) => console.log("Fetch failed!", error));
   }, []);
 
+  useEffect(() => {
+    const storedFavoritesJSON = localStorage.getItem("favorites");
+    if (storedFavoritesJSON) {
+      const storedFavorites: Array<ICovData> = JSON.parse(storedFavoritesJSON);
+      setFavorites(storedFavorites);
+    } else {
+      console.log("no stored json found!");
+    }
+  }, []);
+  useEffect(() => {
+    const saveToLocalStorage = async () => {
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      console.log("saved Favorites to localStorage!");
+    };
+    saveToLocalStorage();
+  }, [favorites]);
   const compare = (curr: ICovData, prev: ICovData): number => {
     if (curr.name < prev.name) {
       return -1;
@@ -199,12 +175,16 @@ const App: FunctionComponent = () => {
             <CardComp
               item={favorite}
               isFavorite={isFavorite(favorite)}
-              handleFavoriteClick={() =>
-                dispatchFavorites({
-                  type: isFavorite(favorite) ? "removeFavorite" : "addFavorite",
-                  payload: favorite,
-                })
-              }
+              handleFavoriteClick={() => {
+                if (isFavorite(favorite)) {
+                  const newFavorites = [...favorites];
+                  const indexOfObject = newFavorites.indexOf(favorite);
+                  newFavorites.splice(indexOfObject, 1);
+                  setFavorites(newFavorites);
+                } else {
+                  setFavorites([...favorites, favorite]);
+                }
+              }}
             />
           ))}
           <Box my="1em">
@@ -222,10 +202,15 @@ const App: FunctionComponent = () => {
                 item={item}
                 isFavorite={isFavorite(item)}
                 handleFavoriteClick={() => {
-                  dispatchFavorites({
-                    type: isFavorite(item) ? "removeFavorite" : "addFavorite",
-                    payload: item,
-                  });
+                  if (isFavorite(item)) {
+                    const newFavorites = [...favorites];
+                    const indexOfObject = newFavorites.indexOf(item);
+                    newFavorites.splice(indexOfObject, 1);
+                    console.log(newFavorites);
+                    setFavorites(newFavorites);
+                  } else {
+                    setFavorites([...favorites, item]);
+                  }
                 }}
               />
             ))}
