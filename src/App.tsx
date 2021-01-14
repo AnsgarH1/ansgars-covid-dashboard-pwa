@@ -1,5 +1,9 @@
 import { StarIcon, TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Box,
   Flex,
   Heading,
@@ -8,11 +12,7 @@ import {
   Spinner,
   Text,
 } from "@chakra-ui/react";
-import React, {
-  FunctionComponent,
-  useEffect,
-  useState,
-} from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 
 interface ICovData {
   cases: number;
@@ -96,6 +96,7 @@ const CardComp = ({
 
 const App: FunctionComponent = () => {
   const [data, setData] = useState<Array<ICovData>>([]);
+  const [fetchFailed, setFetchFailed] = useState<Boolean>(false);
   const [favorites, setFavorites] = useState<Array<ICovData>>([]);
   const [filterString, setFilterString] = useState<string>("");
 
@@ -109,7 +110,10 @@ const App: FunctionComponent = () => {
         console.log("Fetched Data!", res);
         setData(Object.values(res.data));
       })
-      .catch((error) => console.log("Fetch failed!", error));
+      .catch((error) => {
+        setFetchFailed(true);
+        console.log("Fetch failed!", error);
+      });
   }, []);
 
   useEffect(() => {
@@ -215,8 +219,28 @@ const App: FunctionComponent = () => {
             ))}
         </Box>
       ) : (
-        <Box flex="1" justify="center">
-          <Spinner color="white" />
+        <Box flex="1" justify="center" my="2em">
+          {fetchFailed ? (
+            <Alert
+              status="error"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              textAlign="center"
+              height="200px"
+            >
+              <AlertIcon boxSize="40px" mr={0} />
+              <AlertTitle mt={4} mb={1} fontSize="lg">
+                Fehler beim Laden aktueller Covid-Zahlen!
+              </AlertTitle>
+              <AlertDescription>
+                Es konnte nicht auf Daten des Robert-Koch-Instituts zugegriffen
+                werden.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Spinner color="white" />
+          )}
         </Box>
       )}
     </Flex>
@@ -224,39 +248,3 @@ const App: FunctionComponent = () => {
 };
 
 export default App;
-
-/**
- * 
- * {Object.entries(data)
-                .filter((item) => {
-                  return true;
-                })
-                .map((item) => (
-                  <CardComp
-                    item={item}
-                    favorites={favorites}
-                    onStarClick={onStarClick}
-                  />
-                ))}
- */
-
-/**
-  * 
-  * 
-  *  {Object.entries(data.data)
-            .sort(compare)
-            .filter(
-              (item) =>
-                filterString.length < 1 ||
-                item[1].county
-                  .toLowerCase()
-                  .includes(filterString.toLowerCase())
-            )
-            .map((item) => (
-              <CardComp
-                item={item}
-                favorites={favorites}
-                onStarClick={onStarClick}
-              />
-            ))}
-  */
