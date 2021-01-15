@@ -134,22 +134,47 @@ const App: FunctionComponent = () => {
       });
   }, []);
 
+  const updateFavorites = async (item: ICovData) => {
+    if (isFavorite(item)) {
+      const newFavorites = [...favorites];
+      const indexOfObject = newFavorites.indexOf(item);
+      newFavorites.splice(indexOfObject, 1);
+      console.log(newFavorites);
+      setFavorites(newFavorites);
+      saveFavoritesToLocalStorage(newFavorites);
+    } else {
+      const newFavorites = [...favorites, item];
+      setFavorites(newFavorites);
+      saveFavoritesToLocalStorage(newFavorites);
+    }
+  };
+
+  //Load from Favorites
   useEffect(() => {
     const storedFavoritesJSON = localStorage.getItem("favorites");
     if (storedFavoritesJSON) {
-      const storedFavorites: Array<ICovData> = JSON.parse(storedFavoritesJSON);
-      setFavorites(storedFavorites);
+      const storedFavoriteCountys: Array<string> = JSON.parse(
+        storedFavoritesJSON
+      );
+      setFavorites(
+        data.filter((item) => storedFavoriteCountys.includes(item.county))
+      );
     } else {
       console.log("no stored json found!");
     }
-  }, []);
-  useEffect(() => {
-    const saveToLocalStorage = async () => {
-      localStorage.setItem("favorites", JSON.stringify(favorites));
-      console.log("saved Favorites to localStorage!");
-    };
-    saveToLocalStorage();
-  }, [favorites]);
+  }, [data]);
+
+  // Save to Favorites
+  const saveFavoritesToLocalStorage = (newFavorites: Array<ICovData>): void => {
+    localStorage.setItem(
+      "favorites",
+      JSON.stringify(newFavorites.map((fav) => fav.county))
+    );
+    console.log(
+      "saved Favorites to localStorage!",
+      newFavorites.map((fav) => fav.county)
+    );
+  };
 
   const compare = (curr: ICovData, prev: ICovData): number => {
     if (curr.county < prev.county) {
@@ -201,14 +226,7 @@ const App: FunctionComponent = () => {
               item={favorite}
               isFavorite={isFavorite(favorite)}
               handleFavoriteClick={() => {
-                if (isFavorite(favorite)) {
-                  const newFavorites = [...favorites];
-                  const indexOfObject = newFavorites.indexOf(favorite);
-                  newFavorites.splice(indexOfObject, 1);
-                  setFavorites(newFavorites);
-                } else {
-                  setFavorites([...favorites, favorite]);
-                }
+                updateFavorites(favorite);
               }}
             />
           ))}
@@ -226,17 +244,7 @@ const App: FunctionComponent = () => {
               <CardComp
                 item={item}
                 isFavorite={isFavorite(item)}
-                handleFavoriteClick={() => {
-                  if (isFavorite(item)) {
-                    const newFavorites = [...favorites];
-                    const indexOfObject = newFavorites.indexOf(item);
-                    newFavorites.splice(indexOfObject, 1);
-                    console.log(newFavorites);
-                    setFavorites(newFavorites);
-                  } else {
-                    setFavorites([...favorites, item]);
-                  }
-                }}
+                handleFavoriteClick={() => updateFavorites(item)}
               />
             ))}
         </Box>
