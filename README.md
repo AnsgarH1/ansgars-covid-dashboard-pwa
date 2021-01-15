@@ -15,7 +15,7 @@ The Project is also an excuse to learn Typescript and built a [PWA](https://deve
 - [React.js](reactjs.org)
 - [Typescript](https://www.typescriptlang.org/)
 - [Chakra-UI](https://chakra-ui.com/)
-- [Robert Koch-Institut API (v2)](https://github.com/marlon360/rki-covid-api)
+- [API von der Nationalen Plattform für geographische Daten](https://npgeo-corona-npgeo-de.hub.arcgis.com/)
 - hosted on [Netlify](netlify.com) with Continuouse Deployment from Github
 
 ---

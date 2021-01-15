@@ -1,4 +1,4 @@
-import { StarIcon, TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
+import { StarIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertDescription,
@@ -9,30 +9,37 @@ import {
   Heading,
   Icon,
   Input,
+  Link,
   Spinner,
   Text,
 } from "@chakra-ui/react";
 import React, { FunctionComponent, useEffect, useState } from "react";
 
 interface ICovData {
+  OBJECTID: number;
+  AGS: string;
+  BEZ: string;
+  AGS_0: string;
+  EWZ: number;
+  death_rate: number;
   cases: number;
   deaths: number;
-  ags: string;
+  cases_per_100k: number;
+  cases_per_population: number;
+  BL: string;
+  BL_ID: string;
   county: string;
-  state: string;
-  population: number;
-  name: string;
-  casesPerWeek: number;
-  deathsPerWeek: number;
+  last_update: string;
+  cases7_per_100k: number;
   recovered: number;
-  weekIncidence: number;
-  casesPer100k: number;
-  stateAbbreviation: string;
-  delta: {
-    cases: number;
-    deaths: number;
-    recovered: number;
-  };
+  EWZ_BL: number;
+  cases7_bl_per_100k: number;
+  cases7_bl: number;
+  death7_bl: number;
+  cases7_lk: number;
+  death7_lk: number;
+  cases7_per_100k_txt: string;
+  GEN: string;
 }
 
 interface ICardCompProps {
@@ -48,9 +55,9 @@ const CardComp = ({
 }: ICardCompProps) => {
   return (
     <Box
-      key={item.ags}
-      background={Math.round(item.weekIncidence) >= 200 ? "#ff1f1f" : "white"}
-      m="3px"
+      key={item.OBJECTID}
+      background={Math.round(item.cases7_per_100k) >= 200 ? "#e95d69" : "white"}
+      m="6px"
       px="12px"
       py="12px"
       borderRadius="5px"
@@ -61,33 +68,42 @@ const CardComp = ({
       display="flex"
       justifyContent="space-between"
     >
-      <Box>
-        <Box display="flex">
+      <Box maxWidth="70%">
+        <Box display="flex" alignItems="bottom">
           <Icon
             as={StarIcon}
-            color={isFavorite ? "#bfbf02" : "#8f8f8f"}
-            w="13px"
+            color={isFavorite ? "#f8f32b" : "#8f8f8f"}
+            w="20px"
             mr="8px"
             onClick={handleFavoriteClick}
           />
-          <Heading fontSize="l">{item.county}:</Heading>
+          <Text fontSize="15px">{item.BEZ}</Text>
         </Box>
-        <Text>{item.state}</Text>
+        <Box>
+          <Heading fontSize="xl">{item.GEN}</Heading>
+          <Text fontSize="12px">{item.last_update}</Text>
+        </Box>
       </Box>
       <Box
         display="flex"
         flexDirection="column"
-        alignItems="center"
+        alignItems="flex-end"
         justifyContent="space-around"
+        flex="1"
       >
-        <Heading fontSize="l">{Math.round(item.weekIncidence)}</Heading>
-        <Box display="flex" alignItems="center" justifyContent="center" w="3em">
-          <Icon
-            as={item.delta.cases > 0 ? TriangleUpIcon : TriangleDownIcon}
-            w="13px"
-            mr="2px"
-          />
-          <Text fontSize="sm">{item.delta.cases} </Text>
+        <Box display="flex">
+          <Heading fontSize="xl">{item.cases7_per_100k_txt}</Heading>
+          <Text ml="4px" fontSize="10px" alignSelf="flex-end">
+            /100k
+          </Text>
+        </Box>
+        <Box display="flex">
+          <Text fontSize="15px" alignSelf="flex-end">
+            {item.cases7_lk}
+          </Text>
+          <Text ml="4px" fontSize="10px" alignSelf="flex-end">
+            Fälle/7-Tage
+          </Text>
         </Box>
       </Box>
     </Box>
@@ -103,12 +119,15 @@ const App: FunctionComponent = () => {
   const isFavorite = (item: ICovData): boolean => favorites.includes(item);
 
   useEffect(() => {
-    fetch("https://api.corona-zahlen.org/districts")
+    const url: string =
+      "https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,AGS,BEZ,AGS_0,EWZ,death_rate,cases,deaths,cases_per_100k,cases_per_population,BL,BL_ID,county,last_update,cases7_per_100k,recovered,EWZ_BL,cases7_bl_per_100k,cases7_bl,death7_bl,cases7_lk,death7_lk,cases7_per_100k_txt,GEN&returnGeometry=false&outSR=4326&f=json";
+    fetch(url)
       .then((res) => res.json())
-
       .then((res) => {
         console.log("Fetched Data!", res);
-        setData(Object.values(res.data));
+        setData(
+          Object.values(res.features.map((items: any) => items.attributes))
+        );
       })
       .catch((error) => {
         setFetchFailed(true);
@@ -116,27 +135,53 @@ const App: FunctionComponent = () => {
       });
   }, []);
 
+  const updateFavorites = async (item: ICovData) => {
+    if (isFavorite(item)) {
+      const newFavorites = [...favorites];
+      const indexOfObject = newFavorites.indexOf(item);
+      newFavorites.splice(indexOfObject, 1);
+      console.log(newFavorites);
+      setFavorites(newFavorites);
+      saveFavoritesToLocalStorage(newFavorites);
+    } else {
+      const newFavorites = [...favorites, item];
+      setFavorites(newFavorites);
+      saveFavoritesToLocalStorage(newFavorites);
+    }
+  };
+
+  //Load from Favorites
   useEffect(() => {
     const storedFavoritesJSON = localStorage.getItem("favorites");
     if (storedFavoritesJSON) {
-      const storedFavorites: Array<ICovData> = JSON.parse(storedFavoritesJSON);
-      setFavorites(storedFavorites);
+      const storedFavoriteCountys: Array<string> = JSON.parse(
+        storedFavoritesJSON
+      );
+      setFavorites(
+        data.filter((item) => storedFavoriteCountys.includes(item.county))
+      );
     } else {
       console.log("no stored json found!");
     }
-  }, []);
-  useEffect(() => {
-    const saveToLocalStorage = async () => {
-      localStorage.setItem("favorites", JSON.stringify(favorites));
-      console.log("saved Favorites to localStorage!");
-    };
-    saveToLocalStorage();
-  }, [favorites]);
+  }, [data]);
+
+  // Save to Favorites
+  const saveFavoritesToLocalStorage = (newFavorites: Array<ICovData>): void => {
+    localStorage.setItem(
+      "favorites",
+      JSON.stringify(newFavorites.map((fav) => fav.county))
+    );
+    console.log(
+      "saved Favorites to localStorage!",
+      newFavorites.map((fav) => fav.county)
+    );
+  };
+
   const compare = (curr: ICovData, prev: ICovData): number => {
-    if (curr.name < prev.name) {
+    if (curr.county < prev.county) {
       return -1;
     }
-    if (curr.name > prev.name) {
+    if (curr.county > prev.county) {
       return 1;
     }
     return 0;
@@ -147,12 +192,13 @@ const App: FunctionComponent = () => {
       direction="column"
       w="100vw"
       h="100vh"
-      bgGradient="linear(to-b,#686973 ,#474a7a, #143642  20%)"
+      bgGradient="linear(to-b,#2F1847 ,#474a7a, #143642  20%)"
       align="center"
       pt="1rem"
       pl="1rem"
       pr="1rem"
     >
+      {" "}
       <Box w="100vw" align="center">
         <Heading as="h2" color="gray.200" pt="10px">
           Corona Fallzahlen:
@@ -162,34 +208,35 @@ const App: FunctionComponent = () => {
       </Box>
       <Box w="100%" pt="1rem">
         <Input
-          color="grey.100"
+          textColor="grey.100"
+          colorScheme="grey.100"
           type="text"
           placeholder="Landkreis suchen"
           onChange={(event) => setFilterString(event.target.value)}
+          style={{ color: "white" }}
         ></Input>
       </Box>
-
       {data.length > 0 ? (
         <Box overflowY="scroll" overflowX="unset" mt="1rem" w="90vw">
+          {" "}
           <Box my="1em">
             <Text color="gray.100">Favoriten:</Text>
           </Box>
-          {favorites.map((favorite) => (
-            <CardComp
-              item={favorite}
-              isFavorite={isFavorite(favorite)}
-              handleFavoriteClick={() => {
-                if (isFavorite(favorite)) {
-                  const newFavorites = [...favorites];
-                  const indexOfObject = newFavorites.indexOf(favorite);
-                  newFavorites.splice(indexOfObject, 1);
-                  setFavorites(newFavorites);
-                } else {
-                  setFavorites([...favorites, favorite]);
-                }
-              }}
-            />
-          ))}
+          {favorites
+            .filter(
+              (item) =>
+                filterString.length < 1 ||
+                item.county.toLowerCase().includes(filterString.toLowerCase())
+            )
+            .map((favorite) => (
+              <CardComp
+                item={favorite}
+                isFavorite={isFavorite(favorite)}
+                handleFavoriteClick={() => {
+                  updateFavorites(favorite);
+                }}
+              />
+            ))}
           <Box my="1em">
             <Text color="gray.100">Alle Landkreise:</Text>
           </Box>
@@ -204,17 +251,7 @@ const App: FunctionComponent = () => {
               <CardComp
                 item={item}
                 isFavorite={isFavorite(item)}
-                handleFavoriteClick={() => {
-                  if (isFavorite(item)) {
-                    const newFavorites = [...favorites];
-                    const indexOfObject = newFavorites.indexOf(item);
-                    newFavorites.splice(indexOfObject, 1);
-                    console.log(newFavorites);
-                    setFavorites(newFavorites);
-                  } else {
-                    setFavorites([...favorites, item]);
-                  }
-                }}
+                handleFavoriteClick={() => updateFavorites(item)}
               />
             ))}
         </Box>
@@ -243,6 +280,25 @@ const App: FunctionComponent = () => {
           )}
         </Box>
       )}
+      <Box
+        width="100vw"
+        background="gray.800"
+        display="flex"
+        justifyContent="space-around"
+        color="gray.200"
+      >
+        <Text>
+          <Link isExternal href="https://www.hoyer-it.de">
+            ©Hoyer-IT 2021
+          </Link>{" "}
+        </Text>{" "}
+        <Text>|</Text>
+        <Text>
+          <Link isExternal href="https://www.hoyer-it.de/Impressum">
+            Impressum und Datenschutz
+          </Link>
+        </Text>
+      </Box>
     </Flex>
   );
 };
