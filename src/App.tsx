@@ -222,15 +222,21 @@ const App: FunctionComponent = () => {
           <Box my="1em">
             <Text color="gray.100">Favoriten:</Text>
           </Box>
-          {favorites.map((favorite) => (
-            <CardComp
-              item={favorite}
-              isFavorite={isFavorite(favorite)}
-              handleFavoriteClick={() => {
-                updateFavorites(favorite);
-              }}
-            />
-          ))}
+          {favorites
+            .filter(
+              (item) =>
+                filterString.length < 1 ||
+                item.county.toLowerCase().includes(filterString.toLowerCase())
+            )
+            .map((favorite) => (
+              <CardComp
+                item={favorite}
+                isFavorite={isFavorite(favorite)}
+                handleFavoriteClick={() => {
+                  updateFavorites(favorite);
+                }}
+              />
+            ))}
           <Box my="1em">
             <Text color="gray.100">Alle Landkreise:</Text>
           </Box>
