@@ -9,6 +9,7 @@ import {
   Heading,
   Icon,
   Input,
+  Link,
   Spinner,
   Text,
 } from "@chakra-ui/react";
@@ -273,6 +274,25 @@ const App: FunctionComponent = () => {
           )}
         </Box>
       )}
+      <Box
+        width="100vw"
+        background="gray.800"
+        display="flex"
+        justifyContent="space-around"
+        color="gray.200"
+      >
+        <Text>
+          <Link isExternal href="https://www.hoyer-it.de">
+            ©Hoyer-IT 2021
+          </Link>{" "}
+        </Text>{" "}
+        <Text>|</Text>
+        <Text>
+          <Link isExternal href="https://www.hoyer-it.de/Impressum">
+            Impressum und Datenschutz
+          </Link>
+        </Text>
+      </Box>
     </Flex>
   );
 };
