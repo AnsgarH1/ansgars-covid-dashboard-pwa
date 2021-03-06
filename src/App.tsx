@@ -123,26 +123,32 @@ const CardComp = ({
               labels: [
                 ...history
                   .filter((county) => county.ags === item.AGS)[0]
-                  .history.slice(-5)
+                  .history.slice(-10)
                   .map((dateData) =>
                     convertTimesStampToDateString(dateData.date)
                   ),
               ],
               datasets: [
                 {
-                  label: "",
                   data: [
                     ...history
                       .filter((county) => county.ags === item.AGS)[0]
-                      .history.slice(-5)
+                      .history.slice(-10)
                       .map((dateData) => dateData.weekIncidence),
                   ],
                   fill: false,
-                  backgroundColor: "rgb(255, 99, 132)",
-                  borderColor: "rgba(255, 99, 132, 0.2)",
+                  backgroundColor: "#9b3ec2",
+                  borderColor: "#5f2478",
                 },
               ],
             }}
+            options={{
+              legend: {
+                display: false,
+              },
+            }}
+            width={0.3}
+            height={0.3}
           />
         )}
       </Box>
