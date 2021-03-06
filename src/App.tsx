@@ -5,6 +5,7 @@ import {
   AlertIcon,
   AlertTitle,
   Box,
+  Button,
   Flex,
   Heading,
   Icon,
@@ -13,7 +14,8 @@ import {
   Spinner,
   Text,
 } from "@chakra-ui/react";
-import React, { FunctionComponent, useEffect, useState } from "react";
+import { Line } from "@reactchartjs/react-chart.js";
+import React, { useEffect, useState } from "react";
 
 interface ICovData {
   OBJECTID: number;
@@ -41,17 +43,24 @@ interface ICovData {
   cases7_per_100k_txt: string;
   GEN: string;
 }
+interface ICovHistoryData {
+  ags: String;
+  history: Array<any>;
+  name: String;
+}
 
 interface ICardCompProps {
   item: ICovData;
   isFavorite: boolean;
   handleFavoriteClick: () => void;
+  history: Array<ICovHistoryData>;
 }
 
 const CardComp = ({
   item,
   isFavorite,
   handleFavoriteClick,
+  history,
 }: ICardCompProps) => {
   return (
     <Box
@@ -68,7 +77,9 @@ const CardComp = ({
       display="flex"
       justifyContent="space-between"
     >
+      {/** Left Box */}
       <Box maxWidth="70%">
+        {/** Box with County Type and Star-Icon */}
         <Box display="flex" alignItems="bottom">
           <Icon
             as={StarIcon}
@@ -79,17 +90,68 @@ const CardComp = ({
           />
           <Text fontSize="15px">{item.BEZ}</Text>
         </Box>
+        {/** Box with County Name and Date */}
         <Box>
-          <Heading fontSize="xl">{item.GEN}</Heading>
+          <Heading
+            fontSize="xl"
+            onClick={() =>
+              console.log(
+                history
+                  .filter((county) => county.ags === item.AGS)[0]
+                  .history.slice(-5),
+                item
+              )
+            }
+          >
+            {item.GEN}
+          </Heading>
           <Text fontSize="12px">{item.last_update}</Text>
         </Box>
       </Box>
+      {/** Middle Box */}
+      <Box
+        s
+        flex={1}
+        display="flex"
+        flexDirection="column"
+        justifyContent="flex-end"
+      >
+        {history.length > 0 && (
+          <Line
+            type="line"
+            data={{
+              labels: [
+                ...history
+                  .filter((county) => county.ags === item.AGS)[0]
+                  .history.slice(-5)
+                  .map((dateData) =>
+                    convertTimesStampToDateString(dateData.date)
+                  ),
+              ],
+              datasets: [
+                {
+                  label: "",
+                  data: [
+                    ...history
+                      .filter((county) => county.ags === item.AGS)[0]
+                      .history.slice(-5)
+                      .map((dateData) => dateData.weekIncidence),
+                  ],
+                  fill: false,
+                  backgroundColor: "rgb(255, 99, 132)",
+                  borderColor: "rgba(255, 99, 132, 0.2)",
+                },
+              ],
+            }}
+          />
+        )}
+      </Box>
+      {/** Right Box */}
       <Box
         display="flex"
         flexDirection="column"
         alignItems="flex-end"
         justifyContent="space-around"
-        flex="1"
       >
         <Box display="flex">
           <Heading fontSize="xl">{item.cases7_per_100k_txt}</Heading>
@@ -102,7 +164,7 @@ const CardComp = ({
             {item.cases7_lk}
           </Text>
           <Text ml="4px" fontSize="10px" alignSelf="flex-end">
-            Fälle/7-Tage
+            abs. Fälle/7-Tage
           </Text>
         </Box>
       </Box>
@@ -110,14 +172,16 @@ const CardComp = ({
   );
 };
 
-const App: FunctionComponent = () => {
-  const [data, setData] = useState<Array<ICovData>>([]);
+const App = () => {
+  const [rkiData, setRkiData] = useState<Array<ICovData>>([]);
+  const [history, setHistory] = useState<Array<ICovHistoryData>>([]);
   const [fetchFailed, setFetchFailed] = useState<Boolean>(false);
   const [favorites, setFavorites] = useState<Array<ICovData>>([]);
   const [filterString, setFilterString] = useState<string>("");
 
   const isFavorite = (item: ICovData): boolean => favorites.includes(item);
 
+  //fetching Data from RKI Api
   useEffect(() => {
     const url: string =
       "https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,AGS,BEZ,AGS_0,EWZ,death_rate,cases,deaths,cases_per_100k,cases_per_population,BL,BL_ID,county,last_update,cases7_per_100k,recovered,EWZ_BL,cases7_bl_per_100k,cases7_bl,death7_bl,cases7_lk,death7_lk,cases7_per_100k_txt,GEN&returnGeometry=false&outSR=4326&f=json";
@@ -125,7 +189,7 @@ const App: FunctionComponent = () => {
       .then((res) => res.json())
       .then((res) => {
         console.log("Fetched Data!", res);
-        setData(
+        setRkiData(
           Object.values(res.features.map((items: any) => items.attributes))
         );
       })
@@ -133,6 +197,19 @@ const App: FunctionComponent = () => {
         setFetchFailed(true);
         console.log("Fetch failed!", error);
       });
+  }, []);
+
+  //fetching Data from Corona-Zahlen Api
+  useEffect(() => {
+    const covid_url: string = `https://api.corona-zahlen.org/districts/history/incidence`;
+    fetch(covid_url)
+      .then((response) => response.json())
+      .then((response) => {
+        console.log("covid-zahlen", Object.values(response.data)[0]);
+        setHistory(Object.values(response.data));
+      })
+      .then()
+      .catch((err) => console.log("covid-daten-api-fehler:", err));
   }, []);
 
   const updateFavorites = async (item: ICovData) => {
@@ -158,12 +235,12 @@ const App: FunctionComponent = () => {
         storedFavoritesJSON
       );
       setFavorites(
-        data.filter((item) => storedFavoriteCountys.includes(item.county))
+        rkiData.filter((item) => storedFavoriteCountys.includes(item.county))
       );
     } else {
       console.log("no stored json found!");
     }
-  }, [data]);
+  }, [rkiData]);
 
   // Save to Favorites
   const saveFavoritesToLocalStorage = (newFavorites: Array<ICovData>): void => {
@@ -203,8 +280,6 @@ const App: FunctionComponent = () => {
         <Heading as="h2" color="gray.200" pt="10px">
           Corona Fallzahlen:
         </Heading>
-
-        <Text color="gray.300">auf 100k Einwohner</Text>
       </Box>
       <Box w="100%" pt="1rem">
         <Input
@@ -216,7 +291,7 @@ const App: FunctionComponent = () => {
           style={{ color: "white" }}
         ></Input>
       </Box>
-      {data.length > 0 ? (
+      {rkiData.length > 0 ? (
         <Box overflowY="scroll" overflowX="unset" mt="1rem" w="90vw">
           {" "}
           <Box my="1em">
@@ -235,12 +310,13 @@ const App: FunctionComponent = () => {
                 handleFavoriteClick={() => {
                   updateFavorites(favorite);
                 }}
+                history={history}
               />
             ))}
           <Box my="1em">
             <Text color="gray.100">Alle Landkreise:</Text>
           </Box>
-          {data
+          {rkiData
             .sort(compare)
             .filter(
               (item) =>
@@ -252,6 +328,7 @@ const App: FunctionComponent = () => {
                 item={item}
                 isFavorite={isFavorite(item)}
                 handleFavoriteClick={() => updateFavorites(item)}
+                history={[]}
               />
             ))}
         </Box>
@@ -304,3 +381,19 @@ const App: FunctionComponent = () => {
 };
 
 export default App;
+
+function convertTimesStampToDateString(date: Date): String {
+  const timeStamp = new Date(date);
+  const day: String =
+    timeStamp.getDay().toString().length === 1
+      ? "0" + timeStamp.getDay()
+      : timeStamp.getDate().toString();
+  const monthNumber: Number = timeStamp.getMonth() + 1;
+  const month: String =
+    monthNumber.toString().length === 1
+      ? "0" + monthNumber.toString()
+      : monthNumber.toString();
+
+  return day + "." + month;
+}
+//history[0].history.slice(-5).reverse()
