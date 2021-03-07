@@ -1,4 +1,4 @@
-import { StarIcon } from "@chakra-ui/icons";
+import { SearchIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertDescription,
@@ -7,185 +7,19 @@ import {
   Box,
   Flex,
   Heading,
-  Icon,
   Input,
+  InputGroup,
+  InputLeftElement,
   Link,
   Spinner,
   Text,
 } from "@chakra-ui/react";
-import { Line } from "@reactchartjs/react-chart.js";
-import  { useEffect, useState } from "react";
-
-interface ICovData {
-  OBJECTID: number;
-  AGS: string;
-  BEZ: string;
-  AGS_0: string;
-  EWZ: number;
-  death_rate: number;
-  cases: number;
-  deaths: number;
-  cases_per_100k: number;
-  cases_per_population: number;
-  BL: string;
-  BL_ID: string;
-  county: string;
-  last_update: string;
-  cases7_per_100k: number;
-  recovered: number;
-  EWZ_BL: number;
-  cases7_bl_per_100k: number;
-  cases7_bl: number;
-  death7_bl: number;
-  cases7_lk: number;
-  death7_lk: number;
-  cases7_per_100k_txt: string;
-  GEN: string;
-}
-interface ICovHistoryData {
-  ags: String;
-  history: Array<any>;
-  name: String;
-}
-
-interface ICardCompProps {
-  item: ICovData;
-  isFavorite: boolean;
-  handleFavoriteClick: () => void;
-  history: Array<ICovHistoryData>;
-}
-
-const CardComp = ({
-  item,
-  isFavorite,
-  handleFavoriteClick,
-  history,
-}: ICardCompProps) => {
-  return (
-    <Box
-      key={item.OBJECTID}
-      background={Math.round(item.cases7_per_100k) >= 200 ? "#e95d69" : "white"}
-      borderRadius="5px"
-      color="gray.600"
-      display="flex"
-      flexDir="column"
-      m="6px"
-    >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        fontWeight="semibold"
-        letterSpacing="wide"
-        ml="2"
-        px="12px"
-        py="12px"
-      >
-        {/** Left Box */}
-        <Box maxWidth="70%">
-          {/** Box with County Type and Star-Icon */}
-          <Box display="flex" alignItems="bottom">
-            <Icon
-              as={StarIcon}
-              color={isFavorite ? "#f8f32b" : "#8f8f8f"}
-              w="20px"
-              mr="8px"
-              onClick={handleFavoriteClick}
-            />
-            <Text fontSize="15px">{item.BEZ}</Text>
-          </Box>
-          {/** Box with County Name and Date */}
-          <Box>
-            <Heading
-              fontSize="xl"
-              onClick={() =>
-                console.log(
-                  history
-                    .filter((county) => county.ags === item.AGS)[0]
-                    .history.slice(-5),
-                  item
-                )
-              }
-            >
-              {item.GEN}
-            </Heading>
-            <Text fontSize="12px">{item.last_update}</Text>
-          </Box>
-        </Box>
-        {/** Right Box */}
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="flex-end"
-          justifyContent="space-around"
-        >
-          <Box display="flex">
-            <Heading fontSize="xl">{item.cases7_per_100k_txt}</Heading>
-            <Text ml="4px" fontSize="10px" alignSelf="flex-end">
-              /100k
-            </Text>
-          </Box>
-          <Box display="flex">
-            <Text fontSize="15px" alignSelf="flex-end">
-              {item.cases7_lk}
-            </Text>
-            <Text ml="4px" fontSize="10px" alignSelf="flex-end">
-              abs. Fälle/7-Tage
-            </Text>
-          </Box>
-        </Box>
-      </Box>
-
-      {history.length > 0 && (
-        <Box width="100%" m="0" p="0.5rem" height="8rem">
-         
-          <Line
-            type="line"
-            data={{
-              labels: [
-                ...history
-                  .filter((county) => county.ags === item.AGS)[0]
-                  .history.slice(-15)
-                  .map((dateData) =>
-                    convertTimesStampToDateString(dateData.date)
-                  ),
-              ],
-              datasets: [
-                {
-                  data: [
-                    ...history
-                      .filter((county) => county.ags === item.AGS)[0]
-                      .history.slice(-15)
-                      .map((dateData) => dateData.weekIncidence),
-                  ],
-                  fill: false,
-                  backgroundColor: "#9b3ec2",
-                  borderColor: "#5f2478",
-                },
-              ],
-            }}
-            options={{
-              legend: {
-                display: false,
-              },
-              scales: {
-                yAxes: [
-                  {
-                    ticks: {
-                      autoSkip: true,
-                      maxTicksLimit: 4,
-                    },
-                  },
-                ],
-              },
-            }}
-            width={0.3}
-            height={0.1}
-          />
-        </Box>
-      )}
-    </Box>
-  );
-};
+import { useEffect, useState } from "react";
+import CardComp from "./components/CardComp";
+import { ICovData } from "./types/ICovData";
+import { ICovHistoryData } from "./types/ICovHistoryData";
+import { compare } from "./utility/compareICovData";
+import * as appData from "../package.json";
 
 const App = () => {
   const [rkiData, setRkiData] = useState<Array<ICovData>>([]);
@@ -195,6 +29,8 @@ const App = () => {
   const [filterString, setFilterString] = useState<string>("");
 
   const isFavorite = (item: ICovData): boolean => favorites.includes(item);
+
+ 
 
   //fetching Data from RKI Api
   useEffect(() => {
@@ -220,6 +56,12 @@ const App = () => {
     fetch(covid_url)
       .then((response) => response.json())
       .then((response) => {
+        console.log(
+          "covid-zahlen",
+          Object.values(response.data).filter((item: any) =>
+            item.name.includes("Berlin")
+          )[0]
+        );
         console.log("covid-zahlen", Object.values(response.data)[0]);
         setHistory(Object.values(response.data));
       })
@@ -236,6 +78,7 @@ const App = () => {
       setFavorites(newFavorites);
       saveFavoritesToLocalStorage(newFavorites);
     } else {
+      setFilterString("");
       const newFavorites = [...favorites, item];
       setFavorites(newFavorites);
       saveFavoritesToLocalStorage(newFavorites);
@@ -269,22 +112,12 @@ const App = () => {
     );
   };
 
-  const compare = (curr: ICovData, prev: ICovData): number => {
-    if (curr.county < prev.county) {
-      return -1;
-    }
-    if (curr.county > prev.county) {
-      return 1;
-    }
-    return 0;
-  };
-
   return (
     <Flex
       direction="column"
       w="100vw"
       h="100vh"
-      bgGradient="linear(to-b,#2F1847 ,#474a7a, #143642  20%)"
+      bgGradient="linear(to-b,#122e40 0%,#1d427d 41%,#41959a 72%, #cfcfcf 100%)"
       align="center"
       pt="1rem"
       pl="1rem"
@@ -297,14 +130,22 @@ const App = () => {
         </Heading>
       </Box>
       <Box w="100%" pt="1rem">
-        <Input
-          textColor="grey.100"
-          colorScheme="grey.100"
-          type="text"
-          placeholder="Landkreis suchen"
-          onChange={(event) => setFilterString(event.target.value)}
-          style={{ color: "white" }}
-        ></Input>
+        <InputGroup>
+          <InputLeftElement
+            pointerEvents="none"
+            children={<SearchIcon color="gray.300" />}
+          />
+          <Input
+            focusBorderColor="#1d427d"
+            textColor="grey.100"
+            colorScheme="grey.100"
+            type="text"
+            placeholder="Landkreis suchen"
+            onChange={(event) => setFilterString(event.target.value)}
+            value={filterString}
+            style={{ color: "white" }}
+          ></Input>
+        </InputGroup>
       </Box>
       {rkiData.length > 0 ? (
         <Box overflowY="scroll" overflowX="unset" mt="1rem" w="90vw">
@@ -319,14 +160,17 @@ const App = () => {
                 item.county.toLowerCase().includes(filterString.toLowerCase())
             )
             .map((favorite) => (
-              <CardComp
-                item={favorite}
-                isFavorite={isFavorite(favorite)}
-                handleFavoriteClick={() => {
-                  updateFavorites(favorite);
-                }}
-                history={history}
-              />
+              <Box key={favorite.OBJECTID}>
+                <CardComp
+                  item={favorite}
+                  isFavorite={isFavorite(favorite)}
+                  handleFavoriteClick={() => {
+                    updateFavorites(favorite);
+                  }}
+                  enableHistory={true}
+                  history={history}
+                />
+              </Box>
             ))}
           <Box my="1em">
             <Text color="gray.100">Alle Landkreise:</Text>
@@ -344,6 +188,7 @@ const App = () => {
                 isFavorite={isFavorite(item)}
                 handleFavoriteClick={() => updateFavorites(item)}
                 history={[]}
+                enableHistory={false}
               />
             ))}
         </Box>
@@ -374,10 +219,12 @@ const App = () => {
       )}
       <Box
         width="100vw"
-        background="gray.800"
+        background="#405250"
         display="flex"
         justifyContent="space-around"
         color="gray.200"
+        position="absolute"
+        bottom="0"
       >
         <Text>
           <Link isExternal href="https://www.hoyer-it.de">
@@ -390,29 +237,11 @@ const App = () => {
             Impressum und Datenschutz
           </Link>
         </Text>
+        <Text>|</Text>
+        <Text>v{appData.version}</Text>
       </Box>
     </Flex>
   );
 };
 
 export default App;
-
-function convertTimesStampToDateString(date: Date): String {
-  const timeStamp: Date = new Date(date);
-
-  const dayNumber: Number = timeStamp.getDate();
-  const dayString: String =
-    dayNumber.toString().length === 1
-      ? "0" + dayNumber.toString()
-      : dayNumber.toString();
-
-  const monthNumber: number = timeStamp.getMonth() + 1;
-  const monthString: String =
-    monthNumber.toString().length === 1
-      ? "0" + monthNumber.toString()
-      : monthNumber.toString();
-
-  return `
-    ${dayString}.${monthString}.`;
-}
-//history[0].history.slice(-5).reverse()
