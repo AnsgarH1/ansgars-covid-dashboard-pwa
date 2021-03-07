@@ -1,3 +1,4 @@
+import { SearchIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertDescription,
@@ -7,6 +8,8 @@ import {
   Flex,
   Heading,
   Input,
+  InputGroup,
+  InputLeftElement,
   Link,
   Spinner,
   Text,
@@ -72,6 +75,7 @@ const App = () => {
       setFavorites(newFavorites);
       saveFavoritesToLocalStorage(newFavorites);
     } else {
+      setFilterString("");
       const newFavorites = [...favorites, item];
       setFavorites(newFavorites);
       saveFavoritesToLocalStorage(newFavorites);
@@ -110,7 +114,7 @@ const App = () => {
       direction="column"
       w="100vw"
       h="100vh"
-      bgGradient="linear(to-b,#2F1847 ,#474a7a, #143642  20%)"
+      bgGradient="linear(to-b,#122e40 0%,#1d427d 41%,#41959a 72%, #cfcfcf 100%)"
       align="center"
       pt="1rem"
       pl="1rem"
@@ -123,14 +127,22 @@ const App = () => {
         </Heading>
       </Box>
       <Box w="100%" pt="1rem">
-        <Input
-          textColor="grey.100"
-          colorScheme="grey.100"
-          type="text"
-          placeholder="Landkreis suchen"
-          onChange={(event) => setFilterString(event.target.value)}
-          style={{ color: "white" }}
-        ></Input>
+        <InputGroup>
+          <InputLeftElement
+            pointerEvents="none"
+            children={<SearchIcon color="gray.300" />}
+          />
+          <Input
+            focusBorderColor="#1d427d"
+            textColor="grey.100"
+            colorScheme="grey.100"
+            type="text"
+            placeholder="Landkreis suchen"
+            onChange={(event) => setFilterString(event.target.value)}
+            value={filterString}
+            style={{ color: "white" }}
+          ></Input>
+        </InputGroup>
       </Box>
       {rkiData.length > 0 ? (
         <Box overflowY="scroll" overflowX="unset" mt="1rem" w="90vw">
@@ -204,7 +216,7 @@ const App = () => {
       )}
       <Box
         width="100vw"
-        background="gray.800"
+        background="#405250"
         display="flex"
         justifyContent="space-around"
         color="gray.200"
