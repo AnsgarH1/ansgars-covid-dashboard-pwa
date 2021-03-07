@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Line } from "@reactchartjs/react-chart.js";
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 
 interface ICovData {
   OBJECTID: number;
@@ -65,64 +65,86 @@ const CardComp = ({
     <Box
       key={item.OBJECTID}
       background={Math.round(item.cases7_per_100k) >= 200 ? "#e95d69" : "white"}
-      m="6px"
-      px="12px"
-      py="12px"
       borderRadius="5px"
       color="gray.600"
-      fontWeight="semibold"
-      letterSpacing="wide"
-      ml="2"
       display="flex"
-      justifyContent="space-between"
+      flexDir="column"
+      m="6px"
     >
-      {/** Left Box */}
-      <Box maxWidth="70%">
-        {/** Box with County Type and Star-Icon */}
-        <Box display="flex" alignItems="bottom">
-          <Icon
-            as={StarIcon}
-            color={isFavorite ? "#f8f32b" : "#8f8f8f"}
-            w="20px"
-            mr="8px"
-            onClick={handleFavoriteClick}
-          />
-          <Text fontSize="15px">{item.BEZ}</Text>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        fontWeight="semibold"
+        letterSpacing="wide"
+        ml="2"
+        px="12px"
+        py="12px"
+      >
+        {/** Left Box */}
+        <Box maxWidth="70%">
+          {/** Box with County Type and Star-Icon */}
+          <Box display="flex" alignItems="bottom">
+            <Icon
+              as={StarIcon}
+              color={isFavorite ? "#f8f32b" : "#8f8f8f"}
+              w="20px"
+              mr="8px"
+              onClick={handleFavoriteClick}
+            />
+            <Text fontSize="15px">{item.BEZ}</Text>
+          </Box>
+          {/** Box with County Name and Date */}
+          <Box>
+            <Heading
+              fontSize="xl"
+              onClick={() =>
+                console.log(
+                  history
+                    .filter((county) => county.ags === item.AGS)[0]
+                    .history.slice(-5),
+                  item
+                )
+              }
+            >
+              {item.GEN}
+            </Heading>
+            <Text fontSize="12px">{item.last_update}</Text>
+          </Box>
         </Box>
-        {/** Box with County Name and Date */}
-        <Box>
-          <Heading
-            fontSize="xl"
-            onClick={() =>
-              console.log(
-                history
-                  .filter((county) => county.ags === item.AGS)[0]
-                  .history.slice(-5),
-                item
-              )
-            }
-          >
-            {item.GEN}
-          </Heading>
-          <Text fontSize="12px">{item.last_update}</Text>
+        {/** Right Box */}
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="flex-end"
+          justifyContent="space-around"
+        >
+          <Box display="flex">
+            <Heading fontSize="xl">{item.cases7_per_100k_txt}</Heading>
+            <Text ml="4px" fontSize="10px" alignSelf="flex-end">
+              /100k
+            </Text>
+          </Box>
+          <Box display="flex">
+            <Text fontSize="15px" alignSelf="flex-end">
+              {item.cases7_lk}
+            </Text>
+            <Text ml="4px" fontSize="10px" alignSelf="flex-end">
+              abs. Fälle/7-Tage
+            </Text>
+          </Box>
         </Box>
       </Box>
-      {/** Middle Box */}
-      <Box
-        s
-        flex={1}
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-end"
-      >
-        {history.length > 0 && (
+
+      {history.length > 0 && (
+        <Box width="100%" m="0" p="0.5rem" height="8rem">
+         
           <Line
             type="line"
             data={{
               labels: [
                 ...history
                   .filter((county) => county.ags === item.AGS)[0]
-                  .history.slice(-10)
+                  .history.slice(-15)
                   .map((dateData) =>
                     convertTimesStampToDateString(dateData.date)
                   ),
@@ -132,7 +154,7 @@ const CardComp = ({
                   data: [
                     ...history
                       .filter((county) => county.ags === item.AGS)[0]
-                      .history.slice(-10)
+                      .history.slice(-15)
                       .map((dateData) => dateData.weekIncidence),
                   ],
                   fill: false,
@@ -145,34 +167,22 @@ const CardComp = ({
               legend: {
                 display: false,
               },
+              scales: {
+                yAxes: [
+                  {
+                    ticks: {
+                      autoSkip: true,
+                      maxTicksLimit: 4,
+                    },
+                  },
+                ],
+              },
             }}
             width={0.3}
-            height={0.3}
+            height={0.1}
           />
-        )}
-      </Box>
-      {/** Right Box */}
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="flex-end"
-        justifyContent="space-around"
-      >
-        <Box display="flex">
-          <Heading fontSize="xl">{item.cases7_per_100k_txt}</Heading>
-          <Text ml="4px" fontSize="10px" alignSelf="flex-end">
-            /100k
-          </Text>
         </Box>
-        <Box display="flex">
-          <Text fontSize="15px" alignSelf="flex-end">
-            {item.cases7_lk}
-          </Text>
-          <Text ml="4px" fontSize="10px" alignSelf="flex-end">
-            abs. Fälle/7-Tage
-          </Text>
-        </Box>
-      </Box>
+      )}
     </Box>
   );
 };
@@ -388,17 +398,21 @@ const App = () => {
 export default App;
 
 function convertTimesStampToDateString(date: Date): String {
-  const timeStamp = new Date(date);
-  const day: String =
-    timeStamp.getDay().toString().length === 1
-      ? "0" + timeStamp.getDay()
-      : timeStamp.getDate().toString();
-  const monthNumber: Number = timeStamp.getMonth() + 1;
-  const month: String =
+  const timeStamp: Date = new Date(date);
+
+  const dayNumber: Number = timeStamp.getDate();
+  const dayString: String =
+    dayNumber.toString().length === 1
+      ? "0" + dayNumber.toString()
+      : dayNumber.toString();
+
+  const monthNumber: number = timeStamp.getMonth() + 1;
+  const monthString: String =
     monthNumber.toString().length === 1
       ? "0" + monthNumber.toString()
       : monthNumber.toString();
 
-  return day + "." + month;
+  return `
+    ${dayString}.${monthString}.`;
 }
 //history[0].history.slice(-5).reverse()
