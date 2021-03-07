@@ -19,6 +19,7 @@ import CardComp from "./components/CardComp";
 import { ICovData } from "./types/ICovData";
 import { ICovHistoryData } from "./types/ICovHistoryData";
 import { compare } from "./utility/compareICovData";
+import * as appData from "../package.json";
 
 const App = () => {
   const [rkiData, setRkiData] = useState<Array<ICovData>>([]);
@@ -28,6 +29,8 @@ const App = () => {
   const [filterString, setFilterString] = useState<string>("");
 
   const isFavorite = (item: ICovData): boolean => favorites.includes(item);
+
+ 
 
   //fetching Data from RKI Api
   useEffect(() => {
@@ -234,6 +237,8 @@ const App = () => {
             Impressum und Datenschutz
           </Link>
         </Text>
+        <Text>|</Text>
+        <Text>v{appData.version}</Text>
       </Box>
     </Flex>
   );

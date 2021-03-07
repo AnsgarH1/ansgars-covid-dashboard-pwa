@@ -1,9 +1,10 @@
 import { Line } from "@reactchartjs/react-chart.js";
-import { Box, Heading, Icon, Spinner, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Icon, Spinner, Text } from "@chakra-ui/react";
 import { ICovData } from "../types/ICovData";
 import { ICovHistorie, ICovHistoryData } from "../types/ICovHistoryData";
 import { StarIcon } from "@chakra-ui/icons";
 import { convertTimesStampToDateString } from "../utility/timeStampToString";
+import { useState } from "react";
 
 interface ICardCompProps {
   item: ICovData;
@@ -13,7 +14,7 @@ interface ICardCompProps {
   enableHistory: Boolean;
 }
 
-const HISTORY_SIZE: Number = 14;
+const HISTORY_SIZE: number = 14;
 
 function CardComp({
   item,
@@ -22,6 +23,8 @@ function CardComp({
   history,
   enableHistory,
 }: ICardCompProps) {
+  const [historySize, setHistorySize] = useState<number>(HISTORY_SIZE);
+
   let cardHistory: Array<ICovHistorie> = [];
   if (enableHistory && history.length > 0) {
     console.log(
@@ -31,7 +34,7 @@ function CardComp({
     );
     cardHistory = history
       .filter((county) => county.name === item.GEN)[0]
-      .history.slice(-HISTORY_SIZE);
+      .history.slice(-historySize);
   }
 
   return (
@@ -99,57 +102,80 @@ function CardComp({
         <Box>
           {history?.length > 0 ? (
             <Box width="100%" m="0" px="0.5rem" pb="0.5rem">
-              <Box height="6rem">
-                <Line
-                  type="line"
-                  data={{
-                    labels: [
-                      ...cardHistory.map((dateData) =>
-                        convertTimesStampToDateString(dateData.date)
-                      ),
-                    ],
-                    datasets: [
-                      {
-                        data: [
-                          ...cardHistory.map(
-                            (dateData) => dateData.weekIncidence
-                          ),
-                        ],
-                        fill: false,
-                        backgroundColor: getColorByHistory(cardHistory),
-                        pointRadius: "4",
+              <Box display="flex">
+                <Box display="flex" flexDir="column">
+                  <Button
+                    mt="2rem"
+                    size="xs"
+                    disabled={historySize > 30}
+                    onClick={() => setHistorySize(historySize + 1)}
+                  >
+                    +
+                  </Button>
+                  <Button
+                    mt="1rem"
+                    size="xs"
+                    disabled={historySize < 2}
+                    onClick={() => setHistorySize(historySize - 1)}
+                  >
+                    -
+                  </Button>
+                </Box>
+                <Box flex="1" height="9rem" pb="1rem">
+                  <Text ml="4rem" fontSize="xs">
+                    Inzidenzwerte der letzten {historySize} Tage:
+                  </Text>
+                  <Line
+                    type="line"
+                    data={{
+                      labels: [
+                        ...cardHistory.map((dateData) =>
+                          convertTimesStampToDateString(dateData.date)
+                        ),
+                      ],
+                      datasets: [
+                        {
+                          data: [
+                            ...cardHistory.map(
+                              (dateData) => dateData.weekIncidence
+                            ),
+                          ],
+                          fill: false,
+                          backgroundColor: getColorByHistory(cardHistory),
+                          pointRadius: "4",
+                        },
+                      ],
+                    }}
+                    options={{
+                      legend: {
+                        display: false,
                       },
-                    ],
-                  }}
-                  options={{
-                    legend: {
-                      display: false,
-                    },
-                    scales: {
-                      yAxes: [
-                        {
-                          ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 4,
+                      scales: {
+                        yAxes: [
+                          {
+                            ticks: {
+                              autoSkip: true,
+                              maxTicksLimit: 4,
+                            },
                           },
-                        },
-                      ],
-                      xAxes: [
-                        {
-                          ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 10,
+                        ],
+                        xAxes: [
+                          {
+                            ticks: {
+                              autoSkip: true,
+                              maxTicksLimit: 10,
+                            },
                           },
-                        },
-                      ],
-                    },
-                    tooltips: {
-                      enabled: false,
-                    },
-                  }}
-                  width={0.3}
-                  height={0.1}
-                />
+                        ],
+                      },
+                      tooltips: {
+                        enabled: false,
+                      },
+                    }}
+                    width={0.3}
+                    height={0.1}
+                  />
+                </Box>
               </Box>
               <Box
                 display="flex"
