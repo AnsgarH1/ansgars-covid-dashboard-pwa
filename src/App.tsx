@@ -208,6 +208,8 @@ const App = () => {
         display="flex"
         justifyContent="space-around"
         color="gray.200"
+        position="absolute"
+        bottom="0"
       >
         <Text>
           <Link isExternal href="https://www.hoyer-it.de">

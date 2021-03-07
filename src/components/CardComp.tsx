@@ -4,7 +4,6 @@ import { ICovData } from "../types/ICovData";
 import { ICovHistorie, ICovHistoryData } from "../types/ICovHistoryData";
 import { StarIcon } from "@chakra-ui/icons";
 import { convertTimesStampToDateString } from "../utility/timeStampToString";
-import { useEffect } from "react";
 
 interface ICardCompProps {
   item: ICovData;
@@ -13,6 +12,8 @@ interface ICardCompProps {
   history: Array<ICovHistoryData>;
   enableHistory: Boolean;
 }
+
+const HISTORY_SIZE: Number = 14;
 
 function CardComp({
   item,
@@ -30,7 +31,7 @@ function CardComp({
     );
     cardHistory = history
       .filter((county) => county.name === item.GEN)[0]
-      .history.slice(-15);
+      .history.slice(-HISTORY_SIZE);
   }
 
   return (
@@ -97,57 +98,93 @@ function CardComp({
       {enableHistory && (
         <Box>
           {history?.length > 0 ? (
-            <Box width="100%" m="0" p="0.5rem" height="8rem">
-              <Line
-                type="line"
-                data={{
-                  labels: [
-                    ...cardHistory.map((dateData) =>
-                      convertTimesStampToDateString(dateData.date)
-                    ),
-                  ],
-                  datasets: [
-                    {
-                      data: [
-                        ...cardHistory.map(
-                          (dateData) => dateData.weekIncidence
-                        ),
-                      ],
-                      fill: false,
-                      backgroundColor: getColorByHistory(cardHistory),
-                      pointRadius: "4",
+            <Box width="100%" m="0" px="0.5rem" pb="0.5rem">
+              <Box height="6rem">
+                <Line
+                  type="line"
+                  data={{
+                    labels: [
+                      ...cardHistory.map((dateData) =>
+                        convertTimesStampToDateString(dateData.date)
+                      ),
+                    ],
+                    datasets: [
+                      {
+                        data: [
+                          ...cardHistory.map(
+                            (dateData) => dateData.weekIncidence
+                          ),
+                        ],
+                        fill: false,
+                        backgroundColor: getColorByHistory(cardHistory),
+                        pointRadius: "4",
+                      },
+                    ],
+                  }}
+                  options={{
+                    legend: {
+                      display: false,
                     },
-                  ],
-                }}
-                options={{
-                  legend: {
-                    display: false,
-                  },
-                  scales: {
-                    yAxes: [
-                      {
-                        ticks: {
-                          autoSkip: true,
-                          maxTicksLimit: 4,
+                    scales: {
+                      yAxes: [
+                        {
+                          ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 4,
+                          },
                         },
-                      },
-                    ],
-                    xAxes: [
-                      {
-                        ticks: {
-                          autoSkip: true,
-                          maxTicksLimit: 10,
+                      ],
+                      xAxes: [
+                        {
+                          ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 10,
+                          },
                         },
-                      },
-                    ],
-                  },
-                  tooltips: {
-                    enabled: false,
-                  },
-                }}
-                width={0.3}
-                height={0.1}
-              />
+                      ],
+                    },
+                    tooltips: {
+                      enabled: false,
+                    },
+                  }}
+                  width={0.3}
+                  height={0.1}
+                />
+              </Box>
+              <Box
+                display="flex"
+                justifyContent="space-evenly"
+                fontWeight="bold"
+                fontSize="xs"
+              >
+                <Box
+                  backgroundColor="#099c11"
+                  borderRadius="3.5rem"
+                  width="6rem"
+                  p="2px"
+                  textAlign="center"
+                >
+                  <Text color="gray.100">Inzidenz &lt; 50 </Text>
+                </Box>
+                <Box
+                  backgroundColor="#e3e30e"
+                  borderRadius="3.5rem"
+                  width="6rem"
+                  p="2px"
+                  textAlign="center"
+                >
+                  <Text color="gray.750"> Inzidenz &gt; 50 </Text>
+                </Box>
+                <Box
+                  backgroundColor="#c21f1f"
+                  borderRadius="3.5rem"
+                  width="6rem"
+                  p="2px"
+                  textAlign="center"
+                >
+                  <Text color="gray.100">Inzidenz &gt; 100 </Text>
+                </Box>
+              </Box>
             </Box>
           ) : (
             <Box display="flex" p="0.5rem" w="100%" justifyContent="center">
@@ -181,4 +218,3 @@ function getColorByHistory(cardHistory: ICovHistorie[]): Array<String> {
     return "#099c11";
   });
 }
-//history.filter((county) => county.ags === item.AGS)[0].history.slice(-15)
