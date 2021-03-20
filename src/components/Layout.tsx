@@ -1,7 +1,7 @@
 import { IconButton } from "@chakra-ui/button";
 import { SettingsIcon } from "@chakra-ui/icons";
 import { Box, Flex, Heading, Text, Link } from "@chakra-ui/layout";
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import { Link as RouterLink, useHistory } from "react-router-dom";
 
 import * as appData from "../../package.json";
