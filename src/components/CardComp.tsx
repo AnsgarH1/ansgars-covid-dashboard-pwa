@@ -12,6 +12,7 @@ interface ICardCompProps {
   handleFavoriteClick: () => void;
   history: Array<ICovHistoryData>;
   enableHistory: Boolean;
+  historyLoadFailed: Boolean;
 }
 
 const HISTORY_SIZE: number = 14;
@@ -22,6 +23,7 @@ function CardComp({
   handleFavoriteClick,
   history,
   enableHistory,
+  historyLoadFailed,
 }: ICardCompProps) {
   const [historySize, setHistorySize] = useState<number>(HISTORY_SIZE);
 
@@ -220,8 +222,15 @@ function CardComp({
                 flexDirection="column"
                 alignItems="center"
               >
-                <Spinner color="pink" />
-                <Text mr="1rem">Lade Historie..</Text>
+                {!historyLoadFailed ? (
+                  <>
+                    {" "}
+                    <Spinner color="pink" />
+                    <Text mr="1rem">Lade Historie..</Text>
+                  </>
+                ) : (
+                  <Text> Inzidenz-Historie konnte nicht geladen werden!</Text>
+                )}
               </Box>
             </Box>
           )}
