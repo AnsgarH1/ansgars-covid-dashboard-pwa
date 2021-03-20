@@ -9,7 +9,7 @@ import CookieConsent, {
 import { initGA } from "./utility/ga-utils";
 import { useEffect } from "react";
 
-const GA_MID = "G-1BJ43TZTB8";
+const GA_MID = "G-KY1NVM14T8";
 
 const App = () => {
   const handleAcceptCookie = () => {
