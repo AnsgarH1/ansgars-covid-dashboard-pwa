@@ -2,10 +2,12 @@ import LandingPage from "./pages/Landing";
 
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import SettingsPage from "./pages/Settings";
+
 import CookieConsent, {
   Cookies,
   getCookieConsentValue,
 } from "react-cookie-consent";
+
 import { initGA } from "./utility/ga-utils";
 import { useEffect } from "react";
 
@@ -15,6 +17,7 @@ const App = () => {
   const handleAcceptCookie = () => {
     if (GA_MID) {
       initGA(GA_MID);
+      
     }
   };
 
@@ -29,6 +32,7 @@ const App = () => {
     const isConsent = getCookieConsentValue();
     if (isConsent === "true") {
       handleAcceptCookie();
+      
     }
   }, []);
 
