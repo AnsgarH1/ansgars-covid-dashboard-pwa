@@ -12,6 +12,7 @@ import {
   InputLeftElement,
   Spinner,
   Text,
+  Select,
 } from "@chakra-ui/react";
 
 import { ICovData } from "../types/ICovData";
@@ -27,6 +28,9 @@ function LandingPage() {
   const [historyFetchFailed, setHistoryFetchFailed] = useState<Boolean>(false);
   const [favorites, setFavorites] = useState<Array<ICovData>>([]);
   const [filterString, setFilterString] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState<
+    "County" | "Highest" | "Lowest"
+  >("County");
 
   const isFavorite = (item: ICovData): boolean => favorites.includes(item);
 
@@ -90,9 +94,8 @@ function LandingPage() {
   useEffect(() => {
     const storedFavoritesJSON = localStorage.getItem("favorites");
     if (storedFavoritesJSON) {
-      const storedFavoriteCountys: Array<string> = JSON.parse(
-        storedFavoritesJSON
-      );
+      const storedFavoriteCountys: Array<string> =
+        JSON.parse(storedFavoritesJSON);
       setFavorites(
         rkiData.filter((item) => storedFavoriteCountys.includes(item.county))
       );
@@ -130,7 +133,7 @@ function LandingPage() {
             onChange={(event) => setFilterString(event.target.value)}
             value={filterString}
             style={{ color: "white" }}
-          ></Input>
+          />
         </InputGroup>
       </Box>
       {rkiData.length > 0 ? (
@@ -162,13 +165,40 @@ function LandingPage() {
           <Box my="1em">
             <Text color="gray.100">Alle Landkreise:</Text>
           </Box>
+          <InputGroup>
+            <Select
+              backgroundColor="white"
+              placeholder="Sortieren nach:"
+              size="sm"
+              onChange={(event) => {
+                switch (event.target.value) {
+                  case "Landkreis alphabetisch":
+                    setFilterCategory("County");
+                    break;
+                  case "Nach Inzidenz aufsteigend":
+                    setFilterCategory("Highest");
+                    break;
+                  case "Nach Inzidenz absteigend":
+                    setFilterCategory("Lowest");
+                    break;
+                  default:
+                    break;
+                }
+              }}
+            >
+              <option>Landkreis alphabetisch</option>
+              <option>Nach Inzidenz aufsteigend</option>
+              <option> Nach Inzidenz absteigend</option>
+            </Select>
+          </InputGroup>
           {rkiData
-            .sort(compare)
+            .sort((a, b) => compare(a, b, filterCategory))
             .filter(
               (item) =>
                 filterString.length < 1 ||
                 item.county.toLowerCase().includes(filterString.toLowerCase())
             )
+
             .map((item) => (
               <CardComp
                 item={item}
