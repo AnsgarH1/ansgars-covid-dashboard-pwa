@@ -42,7 +42,7 @@ function CardComp({
   return (
     <Box
       key={item.OBJECTID}
-      background={Math.round(item.cases7_per_100k) >= 200 ? "#e95d69" : "white"}
+      background="white"
       borderRadius="5px"
       color="gray.600"
       display="flex"
